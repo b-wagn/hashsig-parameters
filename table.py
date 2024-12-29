@@ -80,7 +80,7 @@ def make_latex_node_legend(id : int, encoding : IncomparableEncoding) -> str:
 
 
 
-log_lifetime_range = [22]
+log_lifetime_range = [20, 22, 24]
 w_range = [1, 2, 4, 8]
 target_sum_offset_range = [1, 1.1, 1.2] #TODO: check based on implementations how far we can go
 

@@ -170,14 +170,14 @@ def make_target_sum_encoding(log_lifetime: int, chunk_size: int, target_sum_offs
 
     # target sum as a multiplicative offset from the expectation
     expected_sum = num_chunks * (2 ** chunk_size - 1)/2
-    target_sum = target_sum_offset * expected_sum
+    target_sum = math.ceil(target_sum_offset * expected_sum)
 
     min_sum = target_sum
     avg_sum = target_sum
 
     # meta information
     name = "TSW"
-    comment = "w = "+str(chunk_size)+ ", offset = " + str(target_sum_offset)
+    comment = "w = "+str(chunk_size)+ ", offset = " + str(target_sum_offset) + ", target sum = " + str(target_sum)
 
     return IncomparableEncoding(
         rand_len,
