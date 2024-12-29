@@ -32,9 +32,9 @@ def make_table_row(log_lifetime : int, encoding : IncomparableEncoding, is_reduc
     row = []
 
     if is_reduced:
-        row = [encoding.name, encoding.comment, signature, hashing_avg, hashing_wc]
+        row = [encoding.name, encoding.chunk_size, encoding.comment, signature, hashing_avg, hashing_wc]
     else:
-        row = [encoding.name, encoding.comment, encoding.num_chunks, parameter_len, encoding.rand_len, encoding.mes_hash_len, hash_len, signature, hashing_avg, hashing_wc]
+        row = [encoding.name, encoding.chunk_size, encoding.comment, encoding.num_chunks, parameter_len, encoding.rand_len, encoding.mes_hash_len, hash_len, signature, hashing_avg, hashing_wc]
 
     return row
 
@@ -80,7 +80,7 @@ def make_latex_node_legend(id : int, encoding : IncomparableEncoding) -> str:
 
 
 
-log_lifetime_range = [20, 22, 24]
+log_lifetime_range = [22, 24]
 w_range = [1, 2, 4, 8]
 target_sum_offset_range = [1, 1.1, 1.2] #TODO: check based on implementations how far we can go
 
@@ -104,7 +104,8 @@ is_latex = args.latex
 if is_reduced:
     headers = [
         "Encoding",
-        "Parameters",
+        "Chunk Size w",
+        "Comment",
         "Signature",
         "Hashing-av",
         "Hashing-wc"
@@ -112,7 +113,8 @@ if is_reduced:
 else:
     headers = [
         "Encoding",
-        "Parameters",
+        "Chunk Size w",
+        "Comment",
         "Num Chunks v",
         "Par Len log|P|",
         "Rand Len l_rnd",
