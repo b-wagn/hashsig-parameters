@@ -196,15 +196,22 @@ def make_target_sum_encoding(log_lifetime: int, chunk_size: int, target_sum_offs
 #                            Lifetime                                #
 # -------------------------------------------------------------------#
 
+def life_time_in_days(log_lifetime: int, seconds_per_slot: int):
+    """
+    Returns the number of days a key can be used for signing
+    2 ** log_lifetime many epochs (= leafs in Merkle tree).
+    """
+    life_time_seconds = seconds_per_slot * (2 ** log_lifetime)
+    life_time_hours = life_time_seconds / 3600
+    life_time_days = life_time_hours / 24
+    return life_time_days
 
 def life_time_in_years(log_lifetime: int, seconds_per_slot: int):
     """
     Returns the number of years a key can be used for signing
     2 ** log_lifetime many epochs (= leafs in Merkle tree).
     """
-    life_time_seconds = seconds_per_slot * (2 ** log_lifetime)
-    life_time_hours = life_time_seconds / 3600
-    life_time_days = life_time_hours / 24
+    life_time_days = life_time_in_days(log_lifetime, seconds_per_slot)
     life_time_years = life_time_days / 365
     return life_time_years
 
