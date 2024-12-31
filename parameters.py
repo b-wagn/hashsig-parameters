@@ -124,7 +124,7 @@ def make_winternitz_encoding(log_lifetime: int, chunk_size: int) -> Incomparable
 
     # meta information
     name = "W"
-    comment = "num_chunks_checksum = "+ str(num_chunks_checksum)
+    comment = "num chunks checksum = "+ str(num_chunks_checksum)
 
     return IncomparableEncoding(
         rand_len,
@@ -169,7 +169,8 @@ def make_target_sum_encoding(log_lifetime: int, chunk_size: int, target_sum_offs
     internal_hashing = parameter_len + rand_len + MESSAGE_LEN
 
     # target sum as a multiplicative offset from the expectation
-    expected_sum = num_chunks * (2 ** chunk_size - 1)/2
+    base = 2 ** chunk_size
+    expected_sum = num_chunks * (base - 1)/2
     target_sum = math.ceil(target_sum_offset * expected_sum)
 
     min_sum = target_sum

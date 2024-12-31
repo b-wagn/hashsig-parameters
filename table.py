@@ -50,10 +50,10 @@ def make_latex_node_type(log_lifetime : int, encoding : IncomparableEncoding) ->
 
     # determine signature size and verifier hashing
     signature = signature_size(log_lifetime, hash_len, encoding) / KIB
-    hashing_wc = verifier_hashing(log_lifetime, parameter_len, hash_len, encoding, True) / WORD_SIZE
+    hashing_ac = verifier_hashing(log_lifetime, parameter_len, hash_len, encoding, False) / WORD_SIZE
 
     fmt_str = "({signature},{hashing}) [{latex_class}]"
-    return fmt_str.format(signature = signature, hashing = hashing_wc, latex_class = encoding.name)
+    return fmt_str.format(signature = signature, hashing = hashing_ac, latex_class = encoding.name)
 
 def make_latex_node_number(id : int, log_lifetime : int, encoding : IncomparableEncoding) -> str:
     """
@@ -66,21 +66,21 @@ def make_latex_node_number(id : int, log_lifetime : int, encoding : Incomparable
 
     # determine signature size and verifier hashing
     signature = signature_size(log_lifetime, hash_len, encoding) / KIB
-    hashing_wc = verifier_hashing(log_lifetime, parameter_len, hash_len, encoding, True) / WORD_SIZE
+    hashing_ac = verifier_hashing(log_lifetime, parameter_len, hash_len, encoding, False) / WORD_SIZE
 
     fmt_str = "({signature},{hashing}) [{id}]"
-    return fmt_str.format(signature = signature, hashing = hashing_wc, id = id)
+    return fmt_str.format(signature = signature, hashing = hashing_ac, id = id)
 
 def make_latex_node_legend(id : int, encoding : IncomparableEncoding) -> str:
     """
         creates the legend part of what we will have to paste into LaTeX
     """
-    fmt_str = "{id}: {{{name}, {comment}}},"
-    return fmt_str.format(name = encoding.name, comment = encoding.comment, id = id)
+    fmt_str = "{id}: {{{name}, {chunk_size}, {comment}}},"
+    return fmt_str.format(name = encoding.name, chunk_size = encoding.chunk_size, comment = encoding.comment, id = id)
 
 
 
-log_lifetime_range = [22, 24]
+log_lifetime_range = [20]
 w_range = [1, 2, 4, 8]
 target_sum_offset_range = [1, 1.1, 1.2] #TODO: check based on implementations how far we can go
 
@@ -169,7 +169,7 @@ for log_lifetime in log_lifetime_range:
     else:
         print(tabulate(rounded_table, headers=headers, tablefmt="pretty"))
 
-    # print the latex info
+    ## print the latex info
     #for s in latex_data_type:
     #    print(s)
     #print("")
