@@ -63,29 +63,30 @@ is_latex = args.latex
 if is_reduced:
     headers = [
         "Encoding",
-        "Chunk Size w",
+        "Chunk Size [bits]",
         "Comment",
-        "Signature",
-        "Hashing-av",
-        "Hashing-wc"
+        "Signature [bits]",
+        "Hashing av [words]",
+        "Hashing wc [words]"
     ]
 else:
     headers = [
         "Encoding",
-        "Chunk Size w",
+        "Chunk Size [bits]",
         "Comment",
-        "Num Chunks v",
-        "Par Len log|P|",
-        "Rand Len l_rnd",
-        "Mes Hash Len kappa",
-        "Hash Len n",
-        "Signature",
-        "Hashing-av",
-        "Hashing-wc"
+        "Num Chunks",
+        "Par Len [bits]",
+        "Rand Len [bits]",
+        "Mes Hash Len [bits]",
+        "Hash Len [bits]",
+        "Signature [KiB]",
+        "Hashing av [words]",
+        "Hashing wc [words]"
     ]
 
 
 print("Note: in the following tables, the parameter delta takes the following role: the target sum is set to delta * exp_sum, where exp_sum is the expected sum if all chunks were uniform.")
+print("Note: 1 Word = 32 Byte")
 
 for log_lifetime in log_lifetime_range:
     # how long would it take with this lifetime?

@@ -5,16 +5,18 @@ import math
 import random
 from dataclasses import dataclass
 
+from lower_bounds import lower_bound_hash_len, lower_bound_message_hash_len_target_sum, lower_bound_message_hash_len_winternitz, lower_bound_parameter_len, lower_bound_rand_len_target_sum, lower_bound_rand_len_winternitz
+
 SECURITY_LEVEL_CLASSICAL = 128
 SECURITY_LEVEL_QUANTUM = 64
 MESSAGE_LEN = 256
 
-# certain lengths are rounded up to bytes
-# e.g., the output length of the hash output
-GRANULARITY = 8
 
-def round_up_to_granularity(s):
-    return math.ceil(s / GRANULARITY) * GRANULARITY
+def round_up_to_bytes(s):
+    """
+    round a number of bits to the next multiple of 8
+    """
+    return math.ceil(s / 8) * 8
 
 # -------------------------------------------------------------------#
 #                   Incomparable Encoding Schemes                    #
@@ -91,14 +93,10 @@ def winternitz_average_sum(chunk_size: int, num_chunks_message) -> float:
 def make_winternitz_encoding(log_lifetime: int, chunk_size: int) -> IncomparableEncoding:
 
     # randomness length
-    rand_len_classical = math.ceil(SECURITY_LEVEL_CLASSICAL + math.log2(5) + log_lifetime + 1)
-    rand_len_quantum = math.ceil(2 * (SECURITY_LEVEL_QUANTUM + math.log2(5) + math.log2(3)) + log_lifetime)
-    rand_len = round_up_to_granularity(max(rand_len_classical, rand_len_quantum))
+    rand_len = round_up_to_bytes(lower_bound_rand_len_winternitz(log_lifetime))
 
     # minimum output length of message hash
-    min_kappa_classical = math.ceil(SECURITY_LEVEL_CLASSICAL + math.log2(5) + 1)
-    min_kappa_quantum = math.ceil(2 * (SECURITY_LEVEL_QUANTUM + math.log2(5) + 1) + 3)
-    min_kappa = round_up_to_granularity(max(min_kappa_classical, min_kappa_quantum))
+    min_kappa = round_up_to_bytes(lower_bound_message_hash_len_winternitz())
     mes_hash_len = min_kappa
 
     # number of chunks for the message part
@@ -149,14 +147,10 @@ def make_target_sum_encoding(log_lifetime: int, chunk_size: int, target_sum_offs
     log_K = 12
 
     # randomness length
-    rand_len_classical = math.ceil(SECURITY_LEVEL_CLASSICAL + math.log2(5) + log_lifetime + log_K + 1)
-    rand_len_quantum = math.ceil(2 * (SECURITY_LEVEL_QUANTUM + math.log2(5) + math.log2(3) + log_K) + log_lifetime)
-    rand_len = round_up_to_granularity(max(rand_len_classical, rand_len_quantum))
+    rand_len = round_up_to_bytes(lower_bound_rand_len_target_sum(log_lifetime, log_K))
 
     # minimum output length of message hash
-    min_msg_hash_len_classical = math.ceil(SECURITY_LEVEL_CLASSICAL + math.log2(5) + 1)
-    min_msg_hash_len_quantum =  math.ceil(2 * (SECURITY_LEVEL_QUANTUM + math.log2(5) + 1) + 3)
-    min_msg_hash_len = round_up_to_granularity(max(min_msg_hash_len_classical, min_msg_hash_len_quantum))
+    min_msg_hash_len = round_up_to_bytes(lower_bound_message_hash_len_target_sum())
 
     # want that number of chunks * chunk_size >= min_msg_hash_len
     num_chunks = math.ceil(min_msg_hash_len / chunk_size)
@@ -192,8 +186,34 @@ def make_target_sum_encoding(log_lifetime: int, chunk_size: int, target_sum_offs
         comment
     )
 
+
 # -------------------------------------------------------------------#
-#                            Lifetime                                #
+#                Setting Parameters from Security Level              #
+# -------------------------------------------------------------------#
+
+
+def determine_parameter_len(log_lifetime: int, num_chains: int, chunk_size: int) -> int:
+    """
+    Determines the parameter length based on the security level.
+    As we need to account for some security loss, we need to take
+    the lifetime and the number and length of chains into account.
+    """
+    lower_bound = lower_bound_parameter_len(log_lifetime, num_chains, chunk_size)
+    return round_up_to_bytes(lower_bound)
+
+
+def determine_hash_len(log_lifetime: int, num_chains: int, chunk_size: int) -> int:
+    """
+    Determines the hash output length based on the security level.
+    As we need to account for some security loss, we need to take
+    the lifetime and the number and length of chains into account.
+    """
+    lower_bound = lower_bound_hash_len(log_lifetime, num_chains, chunk_size)
+    return round_up_to_bytes(lower_bound)
+
+
+# -------------------------------------------------------------------#
+#                         Lifetime to Time                           #
 # -------------------------------------------------------------------#
 
 def life_time_in_days(log_lifetime: int, seconds_per_slot: int):
@@ -298,29 +318,3 @@ def verifier_hashing(
     hashing += merkle_verify_hashing(log_lifetime, hash_len, parameter_len)
 
     return hashing
-
-# -------------------------------------------------------------------#
-#                Setting Parameters from Security Level              #
-# -------------------------------------------------------------------#
-
-
-def determine_parameter_len(log_lifetime: int, num_chains: int, chunk_size: int) -> int:
-    """
-    Determines the parameter length based on the security level.
-    As we need to account for some security loss, we need to take
-    the lifetime and the number and length of chains into account.
-    """
-    min_par_len_classical = math.ceil(SECURITY_LEVEL_CLASSICAL + math.log2(5) + 3)
-    min_par_len_quantum = math.ceil(2 * (SECURITY_LEVEL_QUANTUM + math.log2(5) + 2) + 5)
-    return round_up_to_granularity(max(min_par_len_classical, min_par_len_quantum))
-
-
-def determine_hash_len(log_lifetime: int, num_chains: int, chunk_size: int) -> int:
-    """
-    Determines the hash output length based on the security level.
-    As we need to account for some security loss, we need to take
-    the lifetime and the number and length of chains into account.
-    """
-    min_hash_len_classical = math.ceil(SECURITY_LEVEL_CLASSICAL + math.log2(5) + 2*chunk_size + log_lifetime + math.log2(num_chains))
-    min_hash_len_quantum = math.ceil(2* (SECURITY_LEVEL_QUANTUM + math.log2(5) + 2*chunk_size + log_lifetime + math.log2(num_chains) + math.log2(12)))
-    return round_up_to_granularity(max(min_hash_len_classical, min_hash_len_quantum))
