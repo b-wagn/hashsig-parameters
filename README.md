@@ -10,3 +10,8 @@ You can generate a table showing parameters and resulting signature sizes and ve
 ```
 
 For a reduced version of the table, you can add the `--reduced` flag, and if you want to print in LaTeX, you can add the `--latex` flag.
+
+## Selecting the Hash Function
+
+By default, it is assumed that Poseidon2 is used, but the table can also be generated under the assumption that SHA-256 is used.
+For that, add the `--sha` flag.
