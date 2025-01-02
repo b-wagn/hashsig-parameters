@@ -4,7 +4,8 @@ from typing import List
 from tabulate import tabulate
 import argparse
 
-from parameters import *
+from parameters.common import life_time_in_days, life_time_in_years, signature_size
+from parameters.sha import *
 
 WORD_SIZE = 32 * 8
 KIB = 1024 * 8
