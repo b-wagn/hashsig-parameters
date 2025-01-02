@@ -37,7 +37,7 @@ def field_elements_to_encode_message(log_field_size) -> int:
     res = math.ceil(MESSAGE_LEN / log_field_size)
 
     # we want strict inequality, so maybe we need to add one
-    if MESSAGE_LEN & log_field_size == 0:
+    if MESSAGE_LEN % log_field_size == 0:
         res += 1
 
     return res
