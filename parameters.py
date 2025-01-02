@@ -314,6 +314,9 @@ def verifier_hashing(
     # For each step, hash the parameters and one hash
     hashing += chain_steps_verifier * (parameter_len + hash_len)
 
+    # Now, we hash the chain ends to get the leaf
+    hashing += parameter_len + encoding.num_chunks * hash_len
+
     # Verify the Merkle path
     hashing += merkle_verify_hashing(log_lifetime, hash_len, parameter_len)
 
