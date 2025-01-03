@@ -7,8 +7,6 @@ import math
 import random
 from dataclasses import dataclass
 
-SECURITY_LEVEL_CLASSICAL = 128
-SECURITY_LEVEL_QUANTUM = 64
 MESSAGE_LEN = 256
 
 # -------------------------------------------------------------------#
@@ -174,68 +172,3 @@ def signature_size(
     signature_size += encoding.num_chunks * hash_len
 
     return signature_size
-
-
-
-# -------------------------------------------------------------------#
-#                             Hashing                                #
-# -------------------------------------------------------------------#
-
-
-def merkle_verify_hashing(
-    log_lifetime: int, hash_len: int, parameter_len: int
-) -> int:
-    """
-    Returns the hash complexity to verify a Merkle path given the root and
-    the leaf. The Merkle tree is assumed to have 2 ** log_lifetime many leafs,
-    and each inner node is hash_len long. We also hash the public parameters.
-
-    Note: this assumes that hash_len and parameter_len are given in the same
-    unit (e.g., bits, or field elements), and the resulting hash complexity
-    is given in the same unit.
-
-    Note: this does not include compressing the leaf, i.e., the leaf is
-    already assumed to be of length hash_len.
-    """
-    num_hashes = log_lifetime
-    return num_hashes * (parameter_len + 2 * hash_len)
-
-def verifier_hashing(
-    log_lifetime: int,
-    parameter_len: int,
-    hash_len: int,
-    encoding: IncomparableEncoding,
-    worst_case: bool,
-) -> int:
-    """
-    Returns the hash complexity of verification, given lifetime, output length
-    of the tweakable hash, and encoding.
-
-    Note: this assumes that hash_len, parameter_len, encoding.internal_hashing
-    all have the same unit (e.g., bits, or field elements), and the resulting
-    hash complexity is given in the same unit.
-
-    Note: We do not count tweaks, as they can be hardcoded.
-    Note: Switch between worst-case and average-case using the flag worst_case.
-    """
-    hashing = 0
-
-    # Encode the message, which might involve some hashing
-    hashing += encoding.internal_hashing
-
-    # For the chains: determine how many steps are needed in total
-    chain_steps_signer = encoding.min_sum if worst_case else encoding.avg_sum
-    base = 2**encoding.chunk_size
-    chain_steps_total = encoding.num_chunks * (base - 1)
-    chain_steps_verifier = chain_steps_total - chain_steps_signer
-
-    # For each step, hash the parameters and one hash
-    hashing += chain_steps_verifier * (parameter_len + hash_len)
-
-    # Now, we hash the chain ends to get the leaf
-    hashing += parameter_len + encoding.num_chunks * hash_len
-
-    # Verify the Merkle path
-    hashing += merkle_verify_hashing(log_lifetime, hash_len, parameter_len)
-
-    return hashing

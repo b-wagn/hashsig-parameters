@@ -9,7 +9,6 @@ from parameters.common import (
     life_time_in_days,
     life_time_in_years,
     signature_size,
-    verifier_hashing,
 )
 from parameters.poseidon import (
     bytes_per_field_element,
@@ -22,6 +21,7 @@ from parameters.sha import (
     hash_len_sha,
     parameter_len_sha,
     target_sum_encoding_sha,
+    verifier_hashing,
     winternitz_encoding_sha,
 )
 
@@ -29,7 +29,7 @@ WORD_SIZE = 32 * 8
 KIB = 1024 * 8
 SECONDS_PER_SLOT = 4
 
-LOG_FIELD_SIZE = 31  # TODO
+LOG_FIELD_SIZE = 31
 
 # -------------------------------------------------------------------#
 #           Assembling Schemes, Tables, and Exporting Data           #
@@ -58,18 +58,9 @@ def table_row_poseidon(
     signature = (
         signature_field_elements * bytes_per_field_element(log_field_size) * 8 / KIB
     )
-    hashing_avg = (
-        verifier_hashing(
-            log_lifetime, parameter_len, hash_len, encoding, False
-        )
-        / WORD_SIZE
-    )
-    hashing_wc = (
-        verifier_hashing(
-            log_lifetime, parameter_len, hash_len, encoding, True
-        )
-        / WORD_SIZE
-    )
+    # TODO: need to take care of hashing for poseidon
+    hashing_avg = 0
+    hashing_wc = 0
 
     # Assemble the row
     if is_reduced:

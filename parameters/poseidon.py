@@ -5,6 +5,7 @@
 import math
 
 from lower_bounds import (
+    SECURITY_LEVEL_QUANTUM,
     lower_bound_hash_len,
     lower_bound_message_hash_len_target_sum,
     lower_bound_message_hash_len_winternitz,
@@ -207,4 +208,6 @@ def hash_len_poseidon(
     Therefore, we need to know the logarithm of the field size.
     """
     lower_bound = lower_bound_hash_len(log_lifetime, num_chains, chunk_size)
-    return math.ceil(lower_bound / log_field_size)
+    # additional constraint for the Sponge mode
+    lower_bound_unruh = math.ceil(3 * SECURITY_LEVEL_QUANTUM / log_field_size)
+    return max(lower_bound_unruh,math.ceil(lower_bound / log_field_size))

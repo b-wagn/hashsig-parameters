@@ -48,8 +48,10 @@ def winternitz_encoding_sha(log_lifetime: int, chunk_size: int) -> IncomparableE
     num_chunks = num_chunks_message + num_chunks_checksum
 
     # internal hashing: we hash the parameters, the message, and the randomness
+    # we also hash the tweaks. A tweak is just an epoch, which is 64 bits
     parameter_len = parameter_len_sha(log_lifetime, num_chunks, chunk_size)
-    internal_hashing = parameter_len + rand_len + MESSAGE_LEN
+    tweak_len = 64
+    internal_hashing = parameter_len + rand_len + MESSAGE_LEN + tweak_len
 
     # minimum sum is zero for message and everything for checksum
     # so we first represent the max_checksum in the base and sum
@@ -107,8 +109,10 @@ def target_sum_encoding_sha(
     mes_hash_len = num_chunks * chunk_size
 
     # internal hashing: we hash the parameters, the message, and the randomness
+    # we also hash the tweaks. A tweak is just an epoch, which is 64 bits
     parameter_len = parameter_len_sha(log_lifetime, num_chunks, chunk_size)
-    internal_hashing = parameter_len + rand_len + MESSAGE_LEN
+    tweak_len = 64
+    internal_hashing = parameter_len + rand_len + MESSAGE_LEN + tweak_len
 
     # target sum as a multiplicative offset from the expectation
     base = 2**chunk_size
@@ -160,3 +164,71 @@ def hash_len_sha(log_lifetime: int, num_chains: int, chunk_size: int) -> int:
     """
     lower_bound = lower_bound_hash_len(log_lifetime, num_chains, chunk_size)
     return round_up_to_bytes(lower_bound)
+
+
+# -------------------------------------------------------------------#
+#                             Hashing                                #
+# -------------------------------------------------------------------#
+
+
+def merkle_verify_hashing(
+    log_lifetime: int, hash_len: int, parameter_len: int
+) -> int:
+    """
+    Returns the hash complexity to verify a Merkle path given the root and
+    the leaf. The Merkle tree is assumed to have 2 ** log_lifetime many leafs,
+    and each inner node is hash_len long. We also hash the public parameters.
+
+    Note: this assumes that hash_len and parameter_len are given in bits,
+    and the resulting hash complexity is given in bits.
+
+    Note: this does not include compressing the leaf, i.e., the leaf is
+    already assumed to be of length hash_len.
+    """
+
+    # one hash per layer of the tree
+    num_hashes = log_lifetime
+    # tweak = domain separator + 3 integers
+    tweak_len = 8 + 64 + 64 + 64
+    inputs_per_hash = parameter_len + tweak_len + 2 * hash_len
+    return num_hashes * inputs_per_hash
+
+def verifier_hashing(
+    log_lifetime: int,
+    parameter_len: int,
+    hash_len: int,
+    encoding: IncomparableEncoding,
+    worst_case: bool,
+) -> int:
+    """
+    Returns the hash complexity of verification, given lifetime, output length
+    of the tweakable hash, and encoding.
+
+    Note: this assumes that hash_len, parameter_len, encoding.internal_hashing
+    all have the same unit bits, and the resulting hash complexity is given in
+    the same unit (bits)
+
+    Note: Switch between worst-case and average-case using the flag worst_case.
+    """
+    hashing = 0
+
+    # Encode the message, which might involve some hashing
+    hashing += encoding.internal_hashing
+
+    # For the chains: determine how many steps are needed in total
+    chain_steps_signer = encoding.min_sum if worst_case else encoding.avg_sum
+    base = 2**encoding.chunk_size
+    chain_steps_total = encoding.num_chunks * (base - 1)
+    chain_steps_verifier = chain_steps_total - chain_steps_signer
+
+    # For each step, hash the parameters and one hash
+    tweak_len = 8 + 64 + 64 + 64
+    hashing += chain_steps_verifier * (parameter_len + tweak_len + hash_len)
+
+    # Now, we hash the chain ends to get the leaf
+    hashing += parameter_len + tweak_len + encoding.num_chunks * hash_len
+
+    # Verify the Merkle path
+    hashing += merkle_verify_hashing(log_lifetime, hash_len, parameter_len)
+
+    return hashing
