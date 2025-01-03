@@ -109,9 +109,9 @@ def target_sum_encoding_sha(
     mes_hash_len = num_chunks * chunk_size
 
     # internal hashing: we hash the parameters, the message, and the randomness
-    # we also hash the tweaks. A tweak is just an epoch, which is 64 bits
+    # we also hash the tweaks. A tweak is just an epoch, which is 32 bits
     parameter_len = parameter_len_sha(log_lifetime, num_chunks, chunk_size)
-    tweak_len = 64
+    tweak_len = 32
     internal_hashing = parameter_len + rand_len + MESSAGE_LEN + tweak_len
 
     # target sum as a multiplicative offset from the expectation

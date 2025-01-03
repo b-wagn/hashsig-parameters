@@ -27,7 +27,7 @@ from parameters.common import (
 # -------------------------------------------------------------------#
 
 
-def bytes_per_field_element(log_field_size) -> int:
+def bytes_per_field_element(log_field_size: int) -> int:
     """
     Returns the number of bytes to encode a field element.
     """
@@ -38,7 +38,7 @@ def bytes_per_field_element(log_field_size) -> int:
     return bytes
 
 
-def field_elements_to_encode(log_field_size, input_len) -> int:
+def field_elements_to_encode(log_field_size: int, input_len: int) -> int:
     """
     Returns the number of field elements we need if
     we want to encode a message of length input_len bits.
@@ -56,7 +56,7 @@ def field_elements_to_encode(log_field_size, input_len) -> int:
     return res
 
 
-def field_elements_to_encode_message(log_field_size) -> int:
+def field_elements_to_encode_message(log_field_size: int) -> int:
     """
     Returns the number of field elements we need if
     we want to encode a message.
@@ -64,12 +64,54 @@ def field_elements_to_encode_message(log_field_size) -> int:
     return field_elements_to_encode(log_field_size, MESSAGE_LEN)
 
 
-def field_elements_to_encode_tweak(log_field_size) -> int:
+def field_elements_to_encode_tree_tweak(log_field_size: int, log_lifetime: int) -> int:
     """
     Returns the number of field elements we need if
-    we want to encode a tweak (including l_p, l_t, l_mes, l_rnd, T).
+    we want to encode a tweak for hashing in the tree.
     """
-    tweak_len_bit = 4 * 8 + (8 + 3 * 32)
+
+    # one byte to do domain separation
+    tweak_len_bit = 8
+    # the level in the tree
+    tweak_len_bit += math.ceil(math.log2(log_field_size))
+    # the position in that level
+    tweak_len_bit += log_field_size
+
+    return field_elements_to_encode(log_field_size, tweak_len_bit)
+
+
+def field_elements_to_encode_chain_tweak(
+    log_field_size: int, log_lifetime: int, chunk_size: int, num_chains: int
+) -> int:
+    """
+    Returns the number of field elements we need if
+    we want to encode a tweak for hashing in the chain.
+    """
+
+    # one byte to do domain separation
+    tweak_len_bit = 8
+    # the epoch
+    tweak_len_bit += log_lifetime
+    # the position in the chain
+    tweak_len_bit += chunk_size
+    # the index of the chain
+    tweak_len_bit += math.ceil(math.log2(num_chains))
+
+    return field_elements_to_encode(log_field_size, tweak_len_bit)
+
+
+def field_elements_to_encode_message_hash_tweak(
+    log_field_size: int, log_lifetime: int
+) -> int:
+    """
+    Returns the number of field elements we need if
+    we want to encode a tweak for message hashing.
+    """
+    # one byte to do domain separation
+    tweak_len_bit = 8
+    # the epoch
+    tweak_len_bit += log_lifetime
+
     return field_elements_to_encode(log_field_size, tweak_len_bit)
 
 
@@ -188,7 +230,9 @@ def winternitz_encoding_poseidon(
     parameter_len = parameter_len_poseidon(
         log_field_size, log_lifetime, num_chunks, chunk_size
     )
-    tweak_encoding_len = field_elements_to_encode_tweak(log_field_size)
+    tweak_encoding_len = field_elements_to_encode_message_hash_tweak(
+        log_field_size, log_lifetime
+    )
     internal_hashing = permutation_width_message_hash(
         parameter_len, tweak_encoding_len, message_len_fe, rand_len
     )
@@ -257,7 +301,9 @@ def target_sum_encoding_poseidon(
     parameter_len = parameter_len_poseidon(
         log_field_size, log_lifetime, num_chunks, chunk_size
     )
-    tweak_encoding_len = field_elements_to_encode_tweak(log_field_size)
+    tweak_encoding_len = field_elements_to_encode_message_hash_tweak(
+        log_field_size, log_lifetime
+    )
     internal_hashing = permutation_width_message_hash(
         parameter_len, tweak_encoding_len, message_len_fe, rand_len
     )
@@ -348,7 +394,9 @@ def merkle_verify_hashing(
 
     # one hash per layer of the tree
     num_hashes = log_lifetime
-    tweak_encoding_len = field_elements_to_encode_tweak(log_field_size)
+    tweak_encoding_len = field_elements_to_encode_tree_tweak(
+        log_field_size, log_lifetime
+    )
     one_hash = permutation_width_tree_hash(parameter_len, tweak_encoding_len, hash_len)
     return num_hashes * [one_hash]
 
@@ -387,7 +435,9 @@ def verifier_hashing(
     chain_steps_verifier = chain_steps_total - chain_steps_signer
 
     # For each step, hash the parameters, tweak and one hash
-    tweak_encoding_len = field_elements_to_encode_tweak(log_field_size)
+    tweak_encoding_len = field_elements_to_encode_chain_tweak(
+        log_field_size, log_lifetime, encoding.chunk_size, encoding.num_chunks
+    )
     one_chain_hash = permutation_width_chain_hash(
         parameter_len, tweak_encoding_len, hash_len
     )
