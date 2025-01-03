@@ -69,7 +69,7 @@ def field_elements_to_encode_tweak(log_field_size) -> int:
     Returns the number of field elements we need if
     we want to encode a tweak (including l_p, l_t, l_mes, l_rnd, T).
     """
-    tweak_len_bit = 4 * 8 + (8 + 3 * 64)
+    tweak_len_bit = 4 * 8 + (8 + 3 * 32)
     return field_elements_to_encode(log_field_size, tweak_len_bit)
 
 
