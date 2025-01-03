@@ -11,6 +11,29 @@ SECURITY_LEVEL_CLASSICAL = 128
 SECURITY_LEVEL_QUANTUM = 64
 MESSAGE_LEN = 256
 
+# -------------------------------------------------------------------#
+#                       Helper Functions                             #
+# -------------------------------------------------------------------#
+
+def integer_to_base(integer: int, base: int) -> list[int]:
+    """
+    Converts an integer to its representation in a given base.
+    I.e., the result is a list of integers li such that
+    sum_i li base^i = integer
+
+    Note: this assumes that the integer is non-negative, and that the
+    base is at least 2.
+    """
+    if integer == 0:
+        return [0]
+
+    digits = []
+    while integer > 0:
+        digits.append(integer % base)
+        integer //= base
+
+    return digits
+
 
 # -------------------------------------------------------------------#
 #                   Incomparable Encoding Schemes                    #

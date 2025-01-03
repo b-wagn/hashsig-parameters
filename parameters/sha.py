@@ -12,7 +12,7 @@ from lower_bounds import (
     lower_bound_rand_len_target_sum,
     lower_bound_rand_len_winternitz,
 )
-from parameters.common import MESSAGE_LEN, IncomparableEncoding, winternitz_average_sum
+from parameters.common import MESSAGE_LEN, IncomparableEncoding, integer_to_base, winternitz_average_sum
 
 
 def round_up_to_bytes(s):
@@ -42,7 +42,7 @@ def winternitz_encoding_sha(log_lifetime: int, chunk_size: int) -> IncomparableE
     # number of chunks for the checksum part
     base = 2**chunk_size
     max_checksum = num_chunks_message * (base - 1)
-    num_chunks_checksum = 1 + math.ceil(math.log(max_checksum, base))
+    num_chunks_checksum = 1 + math.floor(math.log(max_checksum, base))
 
     # total number of chunks
     num_chunks = num_chunks_message + num_chunks_checksum
@@ -52,7 +52,10 @@ def winternitz_encoding_sha(log_lifetime: int, chunk_size: int) -> IncomparableE
     internal_hashing = parameter_len + rand_len + MESSAGE_LEN
 
     # minimum sum is zero for message and everything for checksum
-    min_sum = 0 + max_checksum
+    # so we first represent the max_checksum in the base and sum
+    # up the digits. Then, we compute the min_sum.
+    max_checksum_sum = sum(integer_to_base(max_checksum, base))
+    min_sum = 0 + max_checksum_sum
 
     # average sum: determine via simulation
     avg_sum = winternitz_average_sum(chunk_size, num_chunks_message)
