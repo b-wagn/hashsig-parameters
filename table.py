@@ -16,12 +16,13 @@ from parameters.poseidon import (
     parameter_len_poseidon,
     target_sum_encoding_poseidon,
     winternitz_encoding_poseidon,
+    verifier_hashing as verifier_hashing_poseidon,
 )
 from parameters.sha import (
     hash_len_sha,
     parameter_len_sha,
     target_sum_encoding_sha,
-    verifier_hashing,
+    verifier_hashing as verifier_hashing_sha,
     winternitz_encoding_sha,
 )
 
@@ -34,6 +35,20 @@ LOG_FIELD_SIZE = 31
 # -------------------------------------------------------------------#
 #           Assembling Schemes, Tables, and Exporting Data           #
 # -------------------------------------------------------------------#
+
+
+def format_hash_pairs_poseidon(hashing):
+    """
+    Takes a list of tuples (width, frequency) and turns it into a
+    more readable string.
+    """
+    # sort
+    sorted_pairs = sorted(hashing, key=lambda x: x[0])
+    # format each pair, then join them
+    formatted_parts = [f"{count} x Perm({integer})" for integer, count in sorted_pairs]
+    result = ", ".join(formatted_parts)
+
+    return result
 
 
 def table_row_poseidon(
@@ -58,9 +73,16 @@ def table_row_poseidon(
     signature = (
         signature_field_elements * bytes_per_field_element(log_field_size) * 8 / KIB
     )
-    # TODO: need to take care of hashing for poseidon
-    hashing_avg = 0
-    hashing_wc = 0
+    hashing_avg = format_hash_pairs_poseidon(
+        verifier_hashing_poseidon(
+            log_field_size, log_lifetime, parameter_len, hash_len, encoding, False
+        )
+    )
+    hashing_wc = format_hash_pairs_poseidon(
+        verifier_hashing_poseidon(
+            log_field_size, log_lifetime, parameter_len, hash_len, encoding, True
+        )
+    )
 
     # Assemble the row
     if is_reduced:
@@ -104,11 +126,11 @@ def table_row_sha(
     # Determine signature size and verifier hashing
     signature = signature_size(log_lifetime, hash_len, encoding) / KIB
     hashing_avg = (
-        verifier_hashing(log_lifetime, parameter_len, hash_len, encoding, False)
+        verifier_hashing_sha(log_lifetime, parameter_len, hash_len, encoding, False)
         / WORD_SIZE
     )
     hashing_wc = (
-        verifier_hashing(log_lifetime, parameter_len, hash_len, encoding, True)
+        verifier_hashing_sha(log_lifetime, parameter_len, hash_len, encoding, True)
         / WORD_SIZE
     )
 

@@ -45,8 +45,10 @@ class IncomparableEncoding:
     It is specified by a randomness length, and parameters
     w (chunk size) and v (number of chunks of codeword).
 
-    Internal hashing refers to how many bits need to be hashed
+    Internal hashing refers to the input length hashed
     in one invocation of evaluating the encoding scheme.
+    Note: internal hashing is given either in bits (for SHA256)
+    or in "permutation width" (for Poseidon2).
     Min_sum refers to a lower bound on the sum of chunks, which
     is relevant for determining worst case hashing.
     avg_sum is the average sum of the chunks.
