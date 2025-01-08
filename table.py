@@ -115,7 +115,7 @@ def table_row_sha(
     log_lifetime: int, encoding: IncomparableEncoding, is_reduced: bool
 ) -> List[str]:
     """
-    Creates a row for the table, given a scheme (assuming SHA-256).
+    Creates a row for the table, given a scheme (assuming SHA3-256).
     """
     # Determine parameter and hash lengths
     parameter_len = parameter_len_sha(
@@ -171,7 +171,7 @@ parser = argparse.ArgumentParser(description="Check for flags")
 # Add the --reduced flag
 parser.add_argument("--reduced", action="store_true", help="Enable reduced mode")
 parser.add_argument("--latex", action="store_true", help="Enable latex mode")
-parser.add_argument("--sha", action="store_true", help="Enable SHA-256 mode")
+parser.add_argument("--sha", action="store_true", help="Enable SHA3-256 mode")
 
 # Parse the arguments
 args = parser.parse_args()

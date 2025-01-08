@@ -31,7 +31,7 @@ def bytes_per_field_element(log_field_size: int) -> int:
     """
     Returns the number of bytes to encode a field element.
     """
-    # assume k <= log p < k+1. Then 2^k <= p <= 2^{k+1}
+    # assume k <= log p < k+1. Then 2^k <= p < 2^{k+1}
     # this means we need k+1 bits to represent a field element
     bits = math.floor(log_field_size) + 1
     bytes = math.ceil(bits / 8)

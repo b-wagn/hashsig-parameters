@@ -13,5 +13,5 @@ For a reduced version of the table, you can add the `--reduced` flag, and if you
 
 ## Selecting the Hash Function
 
-By default, it is assumed that Poseidon2 is used, but the table can also be generated under the assumption that SHA-256 is used.
+By default, it is assumed that Poseidon2 is used, but the table can also be generated under the assumption that SHA3-256 is used.
 For that, add the `--sha` flag.

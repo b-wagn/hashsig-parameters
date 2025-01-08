@@ -1,6 +1,6 @@
 # This module contains functions to determine parameters
 # for the generalized XMSS scheme, with different encodings.
-# Everything assuming SHA-256 is used for hashing.
+# Everything assuming SHA3-256 is used for hashing.
 
 import math
 
@@ -24,7 +24,7 @@ def round_up_to_bytes(s):
 
 def winternitz_encoding_sha(log_lifetime: int, chunk_size: int) -> IncomparableEncoding:
     """
-    Returns the Winternitz encoding when SHA256 is used for message hashing.
+    Returns the Winternitz encoding when SHA3-256 is used for message hashing.
     The result uses bits as its unit, i.e., rand_len, mes_hash_len, internal hashing
     are all given in bits.
     """
@@ -88,7 +88,7 @@ def target_sum_encoding_sha(
     log_lifetime: int, chunk_size: int, target_sum_offset: float
 ) -> IncomparableEncoding:
     """
-    Returns the target sum encoding when SHA256 is used for message hashing.
+    Returns the target sum encoding when SHA3-256 is used for message hashing.
     The result uses bits as its unit, i.e., rand_len, mes_hash_len, internal hashing
     are all given in bits.
     """
