@@ -48,7 +48,7 @@ def winternitz_encoding_sha(log_lifetime: int, chunk_size: int) -> IncomparableE
     num_chunks = num_chunks_message + num_chunks_checksum
 
     # internal hashing: we hash the parameters, the message, and the randomness
-    # we also hash the tweaks. A tweak is just an epoch, which is 64 bits
+    # we also hash the tweaks. A tweak is just an epoch, which is 32 bits
     parameter_len = parameter_len_sha(log_lifetime, num_chunks, chunk_size)
     tweak_len = 32
     internal_hashing = parameter_len + rand_len + MESSAGE_LEN + tweak_len
@@ -188,8 +188,8 @@ def merkle_verify_hashing(
 
     # one hash per layer of the tree
     num_hashes = log_lifetime
-    # tweak = domain separator + 3 integers
-    tweak_len = 8 + 32 + 32 + 32
+    # tweak = domain separator + level + position in leve
+    tweak_len = 8 + 8 + 32
     inputs_per_hash = parameter_len + tweak_len + 2 * hash_len
     return num_hashes * inputs_per_hash
 
@@ -222,7 +222,8 @@ def verifier_hashing(
     chain_steps_verifier = chain_steps_total - chain_steps_signer
 
     # For each step, hash the parameters and one hash
-    tweak_len = 8 + 32 + 32 + 32
+    # The tweak is epoch:, chain index, position in chain
+    tweak_len = 8 + 32 + 16 + 16
     hashing += chain_steps_verifier * (parameter_len + tweak_len + hash_len)
 
     # Now, we hash the chain ends to get the leaf
