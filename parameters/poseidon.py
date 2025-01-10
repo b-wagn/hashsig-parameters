@@ -7,6 +7,7 @@ import math
 from typing import List, Tuple
 
 from lower_bounds import (
+    SECURITY_LEVEL_CLASSICAL,
     SECURITY_LEVEL_QUANTUM,
     lower_bound_hash_len,
     lower_bound_message_hash_len_target_sum,
@@ -137,9 +138,12 @@ def permutation_width_message_hash(
     and PoseidonCompress internally runs the Poseidon Permutation with
     a certain width t (Field^t -> Field^t). The function outputs t.
     """
-    return round_to_valid_width(
+    min_width = round_to_valid_width(
         parameter_len + tweak_encoding_len + message_len_fe + rand_len
     )
+
+    assert min_width <= 24, "Poseidon Message Hash: width 24 cannot be used"
+    return 24
 
 
 def permutation_width_chain_hash(
@@ -151,7 +155,10 @@ def permutation_width_chain_hash(
     and PoseidonCompress internally runs the Poseidon Permutation with
     a certain width t (Field^t -> Field^t). The function outputs t.
     """
-    return round_to_valid_width(parameter_len + tweak_encoding_len + hash_len)
+    min_width = round_to_valid_width(parameter_len + tweak_encoding_len + hash_len)
+
+    assert min_width <= 16, "Poseidon Chain Hash: width 16 cannot be used"
+    return 16
 
 
 def permutation_width_tree_hash(
@@ -163,11 +170,13 @@ def permutation_width_tree_hash(
     and PoseidonCompress internally runs the Poseidon Permutation with
     a certain width t (Field^t -> Field^t). The function outputs t.
     """
-    return round_to_valid_width(parameter_len + tweak_encoding_len + 2 * hash_len)
+    min_width = round_to_valid_width(parameter_len + tweak_encoding_len + 2 * hash_len)
+    assert min_width <= 24, "Poseidon Tree Hash: width 24 cannot be used"
+    return 24
 
 
 def permutation_widths_leaf_hash(
-    parameter_len: int, tweak_encoding_len: int, hash_len: int, num_chains: int
+    parameter_len: int, tweak_encoding_len: int, hash_len: int, num_chains: int, capacity: int
 ) -> List[int]:
     """
     Returns the list of permutation widths that the leaf
@@ -176,15 +185,17 @@ def permutation_widths_leaf_hash(
     permutation are used.
     """
 
-    # initially, we use a call to PoseidonCompress that calls
-    # the permutation with width hash_len
-    widths = [round_to_valid_width(hash_len)]
+    # initially, we use a call to PoseidonCompress with internal
+    # permutation width of 24.
+    widths = [24]
 
-    # now, we loop for s iterations, and always do a permutation of
-    # width 3 * hash_len. So, we first need to determine s.
+    # now, we loop for s iterations, with a permutation of 24 per iteration
+    # So, we first need to determine s. s should be minimum such that rate * s >=
+    # the length of parameter, tweak, and input.
     par_tweak_mes_len = parameter_len + tweak_encoding_len + num_chains * hash_len
-    s = math.ceil(par_tweak_mes_len / (2 * hash_len)) * 2 * hash_len
-    widths += s * [round_to_valid_width(3 * hash_len)]
+    rate = 24 - capacity
+    s = math.ceil(par_tweak_mes_len / rate)
+    widths += s * [24]
 
     return widths
 
@@ -337,6 +348,15 @@ def target_sum_encoding_poseidon(
 #                Setting Parameters from Security Level              #
 # -------------------------------------------------------------------#
 
+def capacity_poseidon(log_field_size: int, security_classical: int, security_quantum: int) -> int:
+    """
+    Determines the capacity c for the Sponge mode of Poseidon,
+    given a security bound.
+    """
+    lower_bound_classical = math.ceil( 2* security_classical / log_field_size)
+    lower_bound_quantum = math.ceil(3 * security_quantum / log_field_size)
+    return max(lower_bound_classical, lower_bound_quantum)
+
 
 def parameter_len_poseidon(
     log_field_size: int, log_lifetime: int, num_chains: int, chunk_size: int
@@ -447,8 +467,9 @@ def verifier_hashing(
     hashing += int(chain_steps_verifier) * [one_chain_hash]
 
     # Now, we hash the chain ends to get the leaf
+    capacity = capacity_poseidon(log_field_size, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
     hashing += permutation_widths_leaf_hash(
-        parameter_len, tweak_encoding_len, hash_len, encoding.num_chunks
+        parameter_len, tweak_encoding_len, hash_len, encoding.num_chunks, capacity
     )
 
     # Verify the Merkle path
