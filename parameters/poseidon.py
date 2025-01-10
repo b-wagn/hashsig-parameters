@@ -408,6 +408,7 @@ def verifier_hashing(
     hash_len: int,
     encoding: IncomparableEncoding,
     worst_case: bool,
+    is_single_permutation: bool,
 ) -> List[Tuple[int, int]]:
     """
     Returns the hash complexity of verification, given lifetime, output length
@@ -422,6 +423,8 @@ def verifier_hashing(
     permutation width of the internal hashing call of the encoding.
 
     Note: Switch between worst-case and average-case using the flag worst_case.
+
+    Note: Only use one permutation width by setting is_single_permutation to true.
     """
     hashing = []
 
@@ -455,4 +458,8 @@ def verifier_hashing(
 
     # Now, hashing contains all invocations separately, but we want to
     # group them (compute a histogram in some sense)
+    if is_single_permutation:
+        permutation_width = max(hashing)
+        number_of_permutations = len(hashing)
+        return [(permutation_width, number_of_permutations)]
     return list(Counter(hashing).items())

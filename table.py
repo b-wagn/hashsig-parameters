@@ -56,6 +56,7 @@ def table_row_poseidon(
     log_lifetime: int,
     encoding: IncomparableEncoding,
     is_reduced: bool,
+    is_single_permutation: bool
 ) -> List[str]:
     """
     Creates a row for the table, given a scheme (assuming Poseidon).
@@ -75,12 +76,12 @@ def table_row_poseidon(
     )
     hashing_avg = format_hash_pairs_poseidon(
         verifier_hashing_poseidon(
-            log_field_size, log_lifetime, parameter_len, hash_len, encoding, False
+            log_field_size, log_lifetime, parameter_len, hash_len, encoding, False, is_single_permutation
         )
     )
     hashing_wc = format_hash_pairs_poseidon(
         verifier_hashing_poseidon(
-            log_field_size, log_lifetime, parameter_len, hash_len, encoding, True
+            log_field_size, log_lifetime, parameter_len, hash_len, encoding, True, is_single_permutation
         )
     )
 
@@ -172,6 +173,7 @@ parser = argparse.ArgumentParser(description="Check for flags")
 parser.add_argument("--reduced", action="store_true", help="Enable reduced mode")
 parser.add_argument("--latex", action="store_true", help="Enable latex mode")
 parser.add_argument("--sha", action="store_true", help="Enable SHA3-256 mode")
+parser.add_argument("--single", action="store_true", help="Use the same permutation width for everything")
 
 # Parse the arguments
 args = parser.parse_args()
@@ -180,6 +182,7 @@ args = parser.parse_args()
 is_reduced = args.reduced
 is_latex = args.latex
 is_sha = args.sha
+is_single_permutation = args.single
 
 # Set headers based on flags
 if is_sha:
@@ -214,8 +217,8 @@ else:
             "Chunk Size [bits]",
             "Comment",
             "Signature [KiB]",
-            "Hashing av [words]",
-            "Hashing wc [words]",
+            "Hashing av",
+            "Hashing wc",
         ]
         if is_reduced
         else [
@@ -228,8 +231,8 @@ else:
             "Mes Hash Len [bits]",
             "Hash Len [FE]",
             "Signature [KiB]",
-            "Hashing av [FE]",
-            "Hashing wc [FE]",
+            "Hashing av",
+            "Hashing wc",
         ]
     )
 
@@ -259,7 +262,7 @@ for log_lifetime in log_lifetime_range:
         else:
             encoding = winternitz_encoding_poseidon(LOG_FIELD_SIZE, log_lifetime, w)
             table.append(
-                table_row_poseidon(LOG_FIELD_SIZE, log_lifetime, encoding, is_reduced)
+                table_row_poseidon(LOG_FIELD_SIZE, log_lifetime, encoding, is_reduced, is_single_permutation)
             )
 
     for w in w_range:
@@ -273,7 +276,7 @@ for log_lifetime in log_lifetime_range:
                 )
                 table.append(
                     table_row_poseidon(
-                        LOG_FIELD_SIZE, log_lifetime, encoding, is_reduced
+                        LOG_FIELD_SIZE, log_lifetime, encoding, is_reduced, is_single_permutation
                     )
                 )
 
