@@ -228,7 +228,7 @@ else:
             "Num Chunks",
             "Par Len [FE]",
             "Rand Len [FE]",
-            "Mes Hash Len [bits]",
+            "Mes Hash Len [FE]",
             "Hash Len [FE]",
             "Signature [KiB]",
             "Hashing av",
