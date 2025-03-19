@@ -9,6 +9,9 @@ You can generate a table showing parameters and resulting signature sizes and ve
     python3 table.py
 ```
 
+## Setting Lifetimes
+By default, the script will assume a key lifetime of `L = 2^18` slots. You can change this by adding `--log-lifetime x` if you want key lifetime `L=2^x`.
+
 ## Optional Flags
 For a reduced version of the table, you can add the `--reduced` flag, and if you want to print in LaTeX, you can add the `--latex` flag.
 

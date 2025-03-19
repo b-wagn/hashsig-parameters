@@ -162,12 +162,15 @@ def table_row_sha(
     return row
 
 
-log_lifetime_range = [18, 20]
 w_range = [1, 2, 4, 8]
 target_sum_offset_range = [1, 1.1]
 
 # Create the parser
 parser = argparse.ArgumentParser(description="Check for flags")
+
+# Add the --log-lifetime argument with a default value of 18
+parser.add_argument("--log-lifetime", type=int, default=18, help="Log of lifetime duration (default: 18)")
+
 
 # Add the --reduced flag
 parser.add_argument("--reduced", action="store_true", help="Enable reduced mode")
@@ -177,6 +180,8 @@ parser.add_argument("--single", action="store_true", help="Use the same permutat
 
 # Parse the arguments
 args = parser.parse_args()
+
+log_lifetime = args.log_lifetime
 
 # Check if flags are present
 is_reduced = args.reduced
@@ -237,57 +242,53 @@ else:
     )
 
 # Notes
-print(
-    "Note: in the following tables, the parameter delta takes the following role: "
-    "the target sum is set to delta * exp_sum, where exp_sum is the expected sum if all chunks were uniform."
-)
+print()
 print("Note: 1 Word = 32 Byte")
 if not is_sha:
     print("Note: FE = Field Element")
     print(f"Note: Log of field size is {LOG_FIELD_SIZE}")
 
 # Generate tables
-for log_lifetime in log_lifetime_range:
-    years = life_time_in_years(log_lifetime, SECONDS_PER_SLOT)
-    days = life_time_in_days(log_lifetime, SECONDS_PER_SLOT)
+years = life_time_in_years(log_lifetime, SECONDS_PER_SLOT)
+days = life_time_in_days(log_lifetime, SECONDS_PER_SLOT)
 
-    print(f"\nWith 4 second slots: L = 2^{log_lifetime}, {years} years = {days} days")
+print(f"\nWith 4 second slots: Lifetime L = 2^{log_lifetime} = {years} years = {days} days")
 
-    table = []
+table = []
 
-    for w in w_range:
+for w in w_range:
+    if is_sha:
+        encoding = winternitz_encoding_sha(log_lifetime, w)
+        table.append(table_row_sha(log_lifetime, encoding, is_reduced))
+    else:
+        encoding = winternitz_encoding_poseidon(LOG_FIELD_SIZE, log_lifetime, w)
+        table.append(
+            table_row_poseidon(LOG_FIELD_SIZE, log_lifetime, encoding, is_reduced, is_single_permutation)
+        )
+
+for w in w_range:
+    for target_sum_offset in target_sum_offset_range:
         if is_sha:
-            encoding = winternitz_encoding_sha(log_lifetime, w)
+            encoding = target_sum_encoding_sha(log_lifetime, w, target_sum_offset)
             table.append(table_row_sha(log_lifetime, encoding, is_reduced))
         else:
-            encoding = winternitz_encoding_poseidon(LOG_FIELD_SIZE, log_lifetime, w)
+            encoding = target_sum_encoding_poseidon(
+                LOG_FIELD_SIZE, log_lifetime, w, target_sum_offset
+            )
             table.append(
-                table_row_poseidon(LOG_FIELD_SIZE, log_lifetime, encoding, is_reduced, is_single_permutation)
+                table_row_poseidon(
+                    LOG_FIELD_SIZE, log_lifetime, encoding, is_reduced, is_single_permutation
+                )
             )
 
-    for w in w_range:
-        for target_sum_offset in target_sum_offset_range:
-            if is_sha:
-                encoding = target_sum_encoding_sha(log_lifetime, w, target_sum_offset)
-                table.append(table_row_sha(log_lifetime, encoding, is_reduced))
-            else:
-                encoding = target_sum_encoding_poseidon(
-                    LOG_FIELD_SIZE, log_lifetime, w, target_sum_offset
-                )
-                table.append(
-                    table_row_poseidon(
-                        LOG_FIELD_SIZE, log_lifetime, encoding, is_reduced, is_single_permutation
-                    )
-                )
+rounded_table = [
+    [round(cell, 2) if isinstance(cell, (int, float)) else cell for cell in row]
+    for row in table
+]
 
-    rounded_table = [
-        [round(cell, 2) if isinstance(cell, (int, float)) else cell for cell in row]
-        for row in table
-    ]
-
-    print(
-        tabulate(
-            rounded_table, headers=headers, tablefmt="latex" if is_latex else "pretty"
-        )
+print(
+    tabulate(
+        rounded_table, headers=headers, tablefmt="latex" if is_latex else "pretty"
     )
-    print("\n" + "-" * 80 + "\n")
+)
+print("\n" + "-" * 80 + "\n")
