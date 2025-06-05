@@ -73,10 +73,12 @@ def field_elements_to_encode_tree_tweak(log_field_size: int, log_lifetime: int) 
 
     # one byte to do domain separation
     tweak_len_bit = 8
-    # the level in the tree
-    tweak_len_bit += math.ceil(math.log2(log_field_size))
-    # the position in that level
-    tweak_len_bit += log_field_size
+    # the level in the tree, use u8
+    assert math.log2(log_lifetime) <= 8, "Poseidon tree tweak: 32 bits not enough for level in tree"
+    tweak_len_bit += 8
+    # the position in that level, use u32
+    assert log_lifetime <= 32, "Poseidon tree tweak: 32 bits not enough for position in level in tree"
+    tweak_len_bit += 32
 
     return field_elements_to_encode(log_field_size, tweak_len_bit)
 
@@ -91,12 +93,15 @@ def field_elements_to_encode_chain_tweak(
 
     # one byte to do domain separation
     tweak_len_bit = 8
-    # the epoch
-    tweak_len_bit += log_lifetime
-    # the position in the chain
-    tweak_len_bit += chunk_size
-    # the index of the chain
-    tweak_len_bit += math.ceil(math.log2(num_chains))
+    # the epoch, use u32
+    assert log_lifetime <= 32, "Poseidon chain tweak: 32 bits not enough for epoch"
+    tweak_len_bit += 32
+    # the position in the chain, use u8
+    assert chunk_size <= 8, "Poseidon chain tweak: 8 bits not enough for position in chain"
+    tweak_len_bit += 8
+    # the index of the chain, use u8
+    assert math.ceil(math.log2(num_chains)) <= 8, "Poseidon chain tweak: 8 bits not enough for index of chain"
+    tweak_len_bit += 8
 
     return field_elements_to_encode(log_field_size, tweak_len_bit)
 
@@ -110,8 +115,9 @@ def field_elements_to_encode_message_hash_tweak(
     """
     # one byte to do domain separation
     tweak_len_bit = 8
-    # the epoch
-    tweak_len_bit += log_lifetime
+    # the epoch, use u32
+    assert log_lifetime <= 32, "Poseidon message hash tweak: 32 bits not enough for epoch"
+    tweak_len_bit += 32
 
     return field_elements_to_encode(log_field_size, tweak_len_bit)
 
